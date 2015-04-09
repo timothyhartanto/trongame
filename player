@@ -1,0 +1,86 @@
+package project.FIT3140.clashofthetron;
+
+public class Player {
+	ConnectServer conn;
+	String name;
+	int point;
+	int turbo;
+	Bike bike;
+	char direction = 'r';
+	
+	// Constructor for the player
+	public Player(String theName, int theTurbo, Bike theBike, ConnectServer newConn){
+		conn = newConn;
+		name = theName;
+		point = 0;
+		turbo = theTurbo;
+		bike = theBike;
+	}
+	
+	// player control the direction of the bike
+	public void setDirection(char newDir){
+		try{
+		switch(newDir) {
+			case 'u':
+				if(bike.direction.compareTo("down")!=0){
+					bike.setDirection("up");
+					direction = newDir;
+					conn.sendMessage("up");
+				}
+			break;
+			case 'd':
+				if(bike.direction.compareTo("up")!=0){
+					bike.setDirection("down");
+					direction = newDir;
+					conn.sendMessage("down");
+				}
+			break;
+			case 'l':
+				if(bike.direction.compareTo("right")!=0){
+					bike.setDirection("left");
+					direction = newDir;
+					conn.sendMessage("left");
+				}   
+			break;
+			case 'r':
+				if(bike.direction.compareTo("left")!=0){
+					bike.setDirection("right");
+					direction = newDir;
+					conn.sendMessage("right");
+				}
+			break;
+		}
+		}catch(Exception e){
+			
+		}
+	}
+	
+	// check if the player can still use the turbo
+	public void useTurbo(){
+		if(turbo > 0){
+			turbo--;
+			bike.delay = 10;
+			bike.turbo = true;
+			bike.countTurbo = 0;
+			bike.numberTurbo--;
+		}
+	}
+	
+	public char getDirection(){
+		return direction;
+	}
+	
+	public int getTurbo(){
+		return turbo;
+	}
+	
+	public String getName(){
+		return this.name;
+	}
+	public void setName(String name){
+		this.name = name;
+	}
+	public int getPoint(){
+		return this.point;
+	}
+}
