@@ -1,0 +1,80 @@
+package project.FIT3140.clashofthetron;
+
+import org.jivesoftware.smack.Chat;
+import org.jivesoftware.smack.ChatManager;
+import org.jivesoftware.smack.ChatManagerListener;
+import org.jivesoftware.smack.ConnectionConfiguration;
+import org.jivesoftware.smack.MessageListener;
+import org.jivesoftware.smack.SmackConfiguration;
+import org.jivesoftware.smack.XMPPConnection;
+import org.jivesoftware.smack.XMPPException;
+import org.jivesoftware.smack.packet.Message;
+
+public class ConnectServer {
+	private static final int packetReplyTimeout = 500;
+	
+	private String server, receivedMessage="";
+	private int port;
+	
+	private ConnectionConfiguration config;
+	private XMPPConnection connection;
+	
+	private Chat chat;
+	private MessageListener messageListener;
+	
+	public ConnectServer(String server, int port) {
+		this.server = server;
+		this.port = port;
+	}
+	
+	public void connect() throws XMPPException {
+		SmackConfiguration.setPacketReplyTimeout(packetReplyTimeout);
+		
+		config = new ConnectionConfiguration(server, port);
+		config.setSASLAuthenticationEnabled(true);
+		connection = new XMPPConnection(config);
+		connection.connect();
+		messageListener = new MyMessageListener();
+	}
+	
+	public void login(String username, String password) throws XMPPException {
+		if (connection!=null && connection.isConnected()) {
+			connection.login(username, password);
+		}
+	}
+	
+	public void disconnect() {
+		if (connection!=null && connection.isConnected()) {
+			connection.disconnect();
+		}
+	}
+	
+	public void createChat(String buddyJID) {
+		connection.getChatManager().addChatListener(new ChatManagerListenerImpl());
+		chat = connection.getChatManager().createChat(buddyJID, messageListener);
+	}
+	
+	public void sendMessage(String message) throws XMPPException {
+		chat.sendMessage(message);
+	}
+	
+	public String getMessage(){
+		return receivedMessage;
+	}
+	
+	private class ChatManagerListenerImpl implements ChatManagerListener {
+
+	    //@Override
+	    public void chatCreated(final Chat chat, final boolean createdLocally) {
+	        chat.addMessageListener(messageListener);
+	    }
+
+	}
+
+	class MyMessageListener implements MessageListener {
+		//@Override
+		public void processMessage(Chat chat, Message message) {
+			receivedMessage = message.getBody();
+		}
+	}
+}
