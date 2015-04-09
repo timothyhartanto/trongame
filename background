@@ -1,0 +1,30 @@
+package project.FIT3140.clashofthetron;
+
+import android.content.Context;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.view.View;
+
+public class DrawView extends View {
+    Paint gridPaint = new Paint();
+    
+    // constructor to set the grid's colour
+    public DrawView(Context context) {
+        super(context);
+        gridPaint.setColor(Color.CYAN);
+    }
+        
+    // creating the area's grid
+    @Override
+    public void onDraw(Canvas canvas) {
+    	
+    	for(int i= 120; i <= 570; i += 30){
+    		canvas.drawLine(15, i, 465, i, gridPaint);
+    	}
+    	for(int i=15; i <= 465; i += 30){
+    		canvas.drawLine(i, 120, i, 570, gridPaint);
+    	}
+    }
+}
+
