@@ -1,0 +1,310 @@
+package project.FIT3140.clashofthetron;
+
+import android.content.Context;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Path;
+import android.graphics.Rect;
+import android.media.MediaPlayer;
+import android.view.View;
+
+public class Bike extends View{
+	ConnectServer conn;
+	Paint paint = new Paint();
+	
+	// the bike's path
+	Rect bike = new Rect();
+    Path bikePath;
+    Bitmap mBitmap;
+	Canvas mCanvas;
+	Paint mBitmapPaint;
+	Paint bikePaint;
+	Paint testPaint;
+
+	Rect enemyBike = new Rect();
+	Path enemyBikePath;
+	Paint enemyBikePaint;
+	
+	MediaPlayer mp;
+	
+	String direction = "right";
+	String enemyDirection = "left";
+	
+	
+	int x = 45;
+	int y = 330;
+	int enemyX = 435;
+	int enemyY = 330;
+	
+	int numberTurbo = 3;
+	int countTurbo = 0;
+	boolean turbo = false;
+	int delay = 30;
+	
+	int enemyNumberTurbo = 3;
+	int enemyCountTurbo = 0;
+	boolean enemyTurbo = false;
+	int enemyDelay = 30;
+	
+	// for collision
+	int startX = x;
+	int startY = y;
+	int endX;
+	int endY;
+	
+	int enemyStartX = enemyX;
+	int enemyStartY = enemyY;
+	int enemyEndX;
+	int enemyEndY;
+	
+	int speed = 6;
+	int enemySpeed = 6;
+	
+	Rect[] rectContainer = new Rect[500];
+	Rect[] enemyRectContainer = new Rect[500];
+	int rectCounter = 0;
+	int enemyRectCounter = 0;
+	Rect tempRect = new Rect();
+	Rect enemyTempRect = new Rect();
+	boolean collide = false;
+	boolean enemyCollide = false;
+    
+    public Bike(Context context, ConnectServer newConn){
+    	super(context);
+    	conn = newConn;
+    	paint.setColor(Color.WHITE);
+    	
+    	bikePath = new Path();
+        bikePath.moveTo(x,y+3);
+        
+        enemyBikePath = new Path();
+        enemyBikePath.moveTo(enemyX,enemyY+3);
+        
+        mBitmapPaint = new Paint(Paint.DITHER_FLAG);
+
+		bikePaint = new Paint();
+		bikePaint.setColor(Color.MAGENTA);
+		bikePaint.setStrokeWidth(6);
+		bikePaint.setStyle(Paint.Style.STROKE);
+		bikePaint.setStrokeJoin(Paint.Join.ROUND);
+		
+		enemyBikePaint = new Paint();
+		enemyBikePaint.setColor(Color.GREEN);
+		enemyBikePaint.setStrokeWidth(6);
+		enemyBikePaint.setStyle(Paint.Style.STROKE);
+		enemyBikePaint.setStrokeJoin(Paint.Join.ROUND);
+    }
+    
+    @Override
+    protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+         super.onSizeChanged(w, h, oldw, oldh);
+         mBitmap = Bitmap.createBitmap(w, h, Bitmap.Config.ARGB_8888);
+         mCanvas = new Canvas(mBitmap);
+     }
+    
+    // set the bike speed (for use of turbo)
+    public void setSpeed(int s){
+    	speed = s;
+    }
+    
+    //** setting the movement's direction
+    //** the rectCounter is used to increase the path array index
+    public void setDirection(String newDir){
+		direction = newDir;
+		tempRect = new Rect();
+		rectCounter++;
+		startX = endX;
+		startY = endY;
+	}
+    public void setEnemyDirection(String newDir){
+		enemyDirection = newDir;
+		enemyTempRect = new Rect();
+		enemyRectCounter++;
+		enemyStartX = enemyEndX;
+		enemyStartY = enemyEndY;
+	}
+    
+    //** this method used to create the bike and it's path
+    //** this method will invalidate itself unless the bike collide or the user quit the game
+    @Override
+    public void onDraw(Canvas canvas) {
+    	try{
+    		String message = "";
+    		message = conn.getMessage();
+    		if(message.compareTo("") != 0 && message.compareTo(enemyDirection) != 0){
+    			setEnemyDirection(message);
+    		}
+    	}catch(Exception e){
+    		
+    	}
+    	
+    	try {
+    		Thread.sleep(delay);
+    	} catch (InterruptedException e) {
+    		e.printStackTrace();
+    	}
+    	
+    	// the turbo effect will off once its invalidated 50 times
+    	if(countTurbo < 50){
+    		countTurbo++;
+    	}else{
+    		turbo = false;
+    		delay = 30;
+    	}
+    	
+    	if(enemyCountTurbo < 50){
+    		enemyCountTurbo++;
+    	}else{
+    		enemyTurbo = false;
+    		enemyDelay = 30;
+    	}
+    	
+    	// if the bike is still within on the area and not collide with its path, it will keep invalidate
+		if(x <= canvas.getWidth() - 20 && x >= 15 && y >= 120 && y <= 564 && !collide && !enemyCollide){		
+			if(direction.compareTo("down")==0){
+				y = y + speed;
+				bikePath.lineTo(x + 3,y+3);
+				endX = x;
+				endY = y;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(bikePath,bikePaint);
+				tempRect.set(startX + 3, startY + 3, endX + 3, endY);
+				rectContainer[rectCounter] = tempRect;
+			}else if(direction.compareTo("up")==0){
+				y = y - speed;
+				bikePath.lineTo(x + 3, y+3);
+				endX = x;
+				endY = y;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(bikePath,bikePaint);
+				tempRect.set(endX + 3, endY + 9, startX + 3, startY + 3);
+				rectContainer[rectCounter] = tempRect;
+			}else if(direction.compareTo("left")==0){
+				x = x - speed;
+				bikePath.lineTo(x + 3,y+3);
+				endX = x;
+				endY = y;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(bikePath,bikePaint);
+				tempRect.set(endX + 9, endY + 3, startX + 3, startY + 3);
+				rectContainer[rectCounter] = tempRect;
+			}else if(direction.compareTo("right")==0){
+				x = x + speed;
+				bikePath.lineTo(x + 3,y+3);
+				endX = x;
+				endY = y;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(bikePath,bikePaint);
+				tempRect.set(startX+3, startY+3, endX, endY+3);
+				rectContainer[rectCounter] = tempRect;
+			}
+			
+			bike.set(x,y,x+6,y+6);
+			canvas.drawRect(bike, paint);
+		}
+		
+		// the dot which represent the current bike position
+		else {
+			bikePath.lineTo(x + 3,y+3);
+			canvas.drawPath(bikePath,bikePaint);
+			canvas.drawRect(bike, paint);
+			collide = true;
+		}
+		
+		if(enemyX <= canvas.getWidth() - 20 && enemyX >= 15 && enemyY >= 120 && enemyY <= 564 && !collide && !enemyCollide){		
+			if(enemyDirection.compareTo("down")==0){
+				enemyY = enemyY + enemySpeed;
+				enemyBikePath.lineTo(enemyX + 3,enemyY+3);
+				enemyEndX = enemyX;
+				enemyEndY = enemyY;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(enemyBikePath,enemyBikePaint);
+				enemyTempRect.set(enemyStartX + 3, enemyStartY + 3, enemyEndX + 3, enemyEndY);
+				enemyRectContainer[enemyRectCounter] = enemyTempRect;
+			}else if(enemyDirection.compareTo("up")==0){
+				enemyY = enemyY - enemySpeed;
+				enemyBikePath.lineTo(enemyX + 3, enemyY+3);
+				enemyEndX = enemyX;
+				enemyEndY = enemyY;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(enemyBikePath,enemyBikePaint);
+				enemyTempRect.set(enemyEndX + 3, enemyEndY + 9, enemyStartX + 3, enemyStartY + 3);
+				enemyRectContainer[enemyRectCounter] = enemyTempRect;
+			}else if(enemyDirection.compareTo("left")==0){
+				enemyX = enemyX - enemySpeed;
+				enemyBikePath.lineTo(enemyX + 3,enemyY+3);
+				enemyEndX = enemyX;
+				enemyEndY = enemyY;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(enemyBikePath,enemyBikePaint);
+				enemyTempRect.set(enemyEndX + 9, enemyEndY + 3, enemyStartX + 3, enemyStartY + 3);
+				enemyRectContainer[enemyRectCounter] = enemyTempRect;
+			}else if(enemyDirection.compareTo("right")==0){
+				enemyX = enemyX + enemySpeed;
+				enemyBikePath.lineTo(enemyX + 3,enemyY+3);
+				enemyEndX = enemyX;
+				enemyEndY = enemyY;
+				//** keep creating and storing a temporary rectangle to the same array index,
+				//** so it can still able to collide with the path that sill moving
+				canvas.drawPath(enemyBikePath,enemyBikePaint);
+				enemyTempRect.set(enemyStartX+3, enemyStartY+3, enemyEndX, enemyEndY+3);
+				enemyRectContainer[enemyRectCounter] = enemyTempRect;
+			}
+			
+			enemyBike.set(enemyX,enemyY,enemyX+6,enemyY+6);
+			canvas.drawRect(enemyBike, paint);
+		}
+		
+		// the dot which represent the current bike position
+		else {
+			enemyBikePath.lineTo(enemyX + 3,enemyY+3);
+			canvas.drawPath(enemyBikePath,enemyBikePaint);
+			canvas.drawRect(enemyBike, paint);
+			enemyCollide = true;
+		}
+		isCollide();
+		
+		// if collision happen, there will be a sound effect for that
+		if(!collide && !enemyCollide){
+			invalidate();	
+		}else{
+			mp = MediaPlayer.create(getContext(), R.raw.crash);
+			mp.start();
+		}
+    }
+    
+    // check whether the bike collide with it's own path or not
+    public void isCollide(){	
+    	//** the condition recCounter - 1, is not to check the last created rectangle,
+    	//** because it cannot collide with itself nor to move back on it's direction
+    	//** (e.g when moving down, user cannot move up, thus only able to move right or left where neither of these dircetion
+    	//** possible to collide with the down's path)
+    	for(int i=0; i <= rectCounter && !collide && !enemyCollide; i++){
+    		if(bike.intersect(rectContainer[i]) && i < rectCounter){
+    			collide = true;
+    		}
+    		if(enemyBike.intersect(rectContainer[i])){
+    			enemyCollide = true;
+    		}
+    	}
+    	
+    	for(int i=0; i <= enemyRectCounter && !collide && !enemyCollide; i++){
+    		if(bike.intersect(enemyRectContainer[i])){
+    			collide = true;
+    		}
+    		if(enemyBike.intersect(enemyRectContainer[i]) && i < enemyRectCounter){
+    			enemyCollide = true;
+    		}
+    	}
+    }
+    
+}
