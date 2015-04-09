@@ -38,7 +38,7 @@ public class Bike extends View{
 	int enemyX = 435;
 	int enemyY = 330;
 	
-	int numberTurbo = 3;
+	int numberTurbo = 3; 
 	int countTurbo = 0;
 	boolean turbo = false;
 	int delay = 30;
