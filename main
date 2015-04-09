@@ -1,0 +1,305 @@
+package project.FIT3140.clashofthetron;
+
+import org.jivesoftware.smack.XMPPException;
+
+import project.FIT3140.clashofthetron.ConnectServer;
+
+import android.util.*;
+import android.app.Activity;
+import android.graphics.Color;
+import android.os.AsyncTask;
+import android.os.Bundle;
+import android.view.View;
+import android.view.View.OnClickListener;
+import android.view.ViewGroup.LayoutParams;
+import android.widget.Button;
+import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
+
+// The game class itself
+public class ClashOfTheTronActivity extends Activity implements OnClickListener {
+	private ConnectServer conn = new ConnectServer("vps01.fit3140hack.org", 5222);
+
+    Bike bike;
+    Player player;
+    DrawView drawView;
+    Button btn;
+    RelativeLayout rel;	// use to set what to add on the layout
+    String getName;
+    EditText myEditText;
+    
+    int enemyScore = 0;
+    
+    TextView numTurbo;
+    RelativeLayout.LayoutParams pTxtNumTurbo;
+    TextView enemyScoreTxt;
+    RelativeLayout.LayoutParams pbtnEnemyScore;
+    
+    TextView feedback;
+    
+    // the main menu
+    @Override
+    public void onCreate(Bundle savedInstanceState){
+        super.onCreate(savedInstanceState);
+
+        setContentView(R.layout.main);
+        
+        View play = findViewById(R.id.play);
+        play.setOnClickListener(this);
+        
+        View connect = findViewById(R.id.connect);
+        connect.setOnClickListener(this);
+        
+        View disconnect = findViewById(R.id.disconnect);
+        disconnect.setOnClickListener(this);
+        
+        View receive = findViewById(R.id.receive);
+        receive.setOnClickListener(this);
+        
+        View bar = findViewById(R.id.progressBar);
+        bar.setVisibility(8);
+        
+        feedback = (TextView) findViewById(R.id.textView1);
+        
+        myEditText = (EditText)findViewById(R.id.editText1);
+        
+        
+        
+    }
+    
+    // onClick method for all the buttons on the game
+    public void onClick(View view){
+    	switch(view.getId()) { 
+    	
+	    	case R.id.receive:
+	    		feedback.setText(conn.getMessage());
+				break;
+				
+    		case R.id.disconnect:
+    			conn.disconnect();
+    			feedback.setText("Disconnected");
+    			break;
+    		case R.id.connect:
+    			//conn = new ConnectServer("vps01.fit3140hack.org", 5222);
+            	
+            	try {
+    				conn.connect();
+    	        	conn.login("timothy", "lapet");
+    				conn.createChat("baling@vps01.fit3140hack.org");
+    				feedback.setText("connected");
+    	        } catch (Exception e) {
+    	        	
+    	        	// TODO Auto-generated catch block
+    				e.printStackTrace();
+    				feedback.setText("failed");
+    	        }
+    			break;
+    		case R.id.play:  
+    		case R.id.playAgain:
+    			
+    			rel = new RelativeLayout (this);
+                rel.setLayoutParams(new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.FILL_PARENT));
+                
+                // get the input name and display it
+                getName = myEditText.getText().toString();
+                TextView name = new TextView(this);
+                name.setText("Name: " + getName);
+                RelativeLayout.LayoutParams pbtnName = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+                pbtnName.setMargins(50, 0, 100, 0);
+                
+                // creating the bike(the dot) on the game
+    	        bike = new Bike(this, conn);    
+    	        player = new Player(getName, bike.numberTurbo, bike, conn);
+    	        drawView = new DrawView(this);
+    	        RelativeLayout.LayoutParams area = new RelativeLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT); 
+    	        area.addRule(RelativeLayout.CENTER_HORIZONTAL);
+    	        
+    	        // set player's score
+    	        TextView myScore = new TextView(this);
+                myScore.setText("Score: " + player.point);
+                RelativeLayout.LayoutParams pbtnScore = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+                pbtnScore.setMargins(50, 30, 100 ,0);    
+    	        
+                // display the enemy's name
+    	        TextView enemyName = new TextView(this);
+                enemyName.setText("Enemy's Name: " );
+                RelativeLayout.LayoutParams pbtnEnemyName = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+                pbtnEnemyName.setMargins(50, 60, 100, 0);
+                
+                // display the enemy's score
+                enemyScoreTxt = new TextView(this);
+                enemyScoreTxt.setText("Enemy's Score: " + enemyScore);
+                pbtnEnemyScore = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+                pbtnEnemyScore.setMargins(50, 90, 100 ,0);
+
+                // up button to set the movement
+    	        Button btnUp = new Button(this);
+    	        btnUp.setText("Up");
+    	        RelativeLayout.LayoutParams pbtnUp = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnUp.setMargins(200, 780, 250, 0);
+    	        btnUp.setId(1000);
+    	        btnUp.setOnClickListener(this);
+
+    	        // down button to set the movement
+    	        Button btnDown = new Button(this);
+    	        btnDown.setText("Down");
+    	        RelativeLayout.LayoutParams pbtnDown = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnDown.setMargins(200, 950, 250, 0);
+    	        btnDown.setId(2000);
+    	        btnDown.setOnClickListener(this);
+    	        
+    	        // left button to set the movement
+    	        Button btnLeft = new Button(this);
+    	        btnLeft.setText("Left");
+    	        RelativeLayout.LayoutParams pbtnLeft = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnLeft.setMargins(60, 865, 420, 0);
+    	        btnLeft.setId(3000);
+    	        btnLeft.setOnClickListener(this);
+    	        
+    	        // right button to set the movement
+    	        Button btnRight = new Button(this);
+    	        btnRight.setText("Right");
+    	        RelativeLayout.LayoutParams pbtnRight = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnRight.setMargins(350, 865, 130, 0);
+    	        btnRight.setId(4000);
+    	        btnRight.setOnClickListener(this);
+    	        
+    	        // back button, to go back to the main menu
+    	        Button back = new Button(this);
+    	        back.setText("Back");
+    	        RelativeLayout.LayoutParams pbtnBack = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnBack.setMargins(460, 10, 350, 550);
+    	        back.setId(5000);
+    	        back.setOnClickListener(this);
+    	        
+    	        // continue button to start the next game
+    	        Button cont = new Button(this);
+    	        cont.setText("Continue");
+    	        RelativeLayout.LayoutParams pbtnCont = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnCont.setMargins(460, 100, 350, 610);
+    	        cont.setId(7000);
+    	        cont.setOnClickListener(this);
+    	        
+    	        // turbo button
+    	        Button btnTurbo = new Button(this);
+    	        btnTurbo.setText("Turbo");
+    	        RelativeLayout.LayoutParams pbtnTurbo = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pbtnTurbo.setMargins(360, 580, 10, 0);
+    	        btnTurbo.setId(6000);
+    	        btnTurbo.setOnClickListener(this);
+
+    	        // displaying the amount of turbo available
+    	        numTurbo = new TextView(this);
+    	        numTurbo.setText("Turbo : " + player.turbo);
+    	        pTxtNumTurbo = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    	        pTxtNumTurbo.setMargins(370, 665, 10, 0);
+    	        
+    	        rel.addView(drawView, area);
+    	        rel.addView(name, pbtnName);
+    	        rel.addView(myScore, pbtnScore);
+    	        rel.addView(bike, area);
+    	        rel.addView(enemyName, pbtnEnemyName);
+    	        rel.addView(enemyScoreTxt, pbtnEnemyScore);
+    	    	rel.addView(btnUp, pbtnUp);
+    	    	rel.addView(btnDown, pbtnDown);
+    	    	rel.addView(btnLeft, pbtnLeft);
+    	    	rel.addView(btnRight, pbtnRight);
+    	    	rel.addView(back, pbtnBack);
+    	    	rel.addView(cont, pbtnCont);
+    	    	rel.addView(btnTurbo, pbtnTurbo);
+    	    	rel.addView(numTurbo, pTxtNumTurbo);
+    	    	
+    	    	new Progress().execute(""); 			
+    		break;
+
+    		case 1000:
+    			player.setDirection('u');
+    		break;
+    		case 2000:
+    			player.setDirection('d'); 
+        	break;
+    		case 3000:
+    			player.setDirection('l'); 
+        	break;
+    		case 4000:
+    			player.setDirection('r');
+    		break;
+    		case 5000:
+    			if(player.bike.collide){
+    				player.bike.mp.stop();
+    			}
+    			enemyScore = 0;
+    			setContentView(R.layout.main);
+    			View play = findViewById(R.id.play);
+    			play.setOnClickListener(this);
+    			View bar = findViewById(R.id.progressBar);
+    	        bar.setVisibility(8);
+    		break;
+    		
+    		case 6000:
+    			player.useTurbo();
+    				
+    	    	numTurbo = new TextView(this);
+    			numTurbo.setText("Turbo : " + player.turbo);
+    			pTxtNumTurbo = new RelativeLayout.LayoutParams(LayoutParams.FILL_PARENT, LayoutParams.WRAP_CONTENT);
+    			pTxtNumTurbo.setMargins(370, 665, 10, 0);
+    	        numTurbo.setBackgroundColor(Color.BLACK);
+    	        rel.addView(numTurbo, pTxtNumTurbo);
+    		break;
+    		
+    		case 7000:
+    			if(bike.collide){
+    				if(player.bike.collide){
+        				player.bike.mp.stop();
+        			}
+    				if(enemyScore < 2){
+    					enemyScore++;
+    					setContentView(R.layout.blank);
+        				View playAgain = findViewById(R.id.playAgain);
+        				playAgain.setOnClickListener(this);
+    				}else{
+    					setContentView(R.layout.main);
+    	    			play = findViewById(R.id.play);
+    	    			play.setOnClickListener(this);
+    	    			View connect = findViewById(R.id.connect);
+    	    			connect.setOnClickListener(this);
+    	    			View disconnect = findViewById(R.id.disconnect);
+    	    			disconnect.setOnClickListener(this);
+    	    			enemyScore = 0;
+    				}
+    			}
+    		break;
+    		
+    	}
+    
+    }
+    
+    private class Progress extends AsyncTask<String, Void, String> {
+
+        @Override
+        protected String doInBackground(String... params) {
+        	
+        	return "Done Loading"; 
+        }   
+        	 
+
+        @Override
+        protected void onPostExecute(String result) {
+        	setContentView(rel);    
+        }
+
+        @Override
+        protected void onPreExecute() {
+        	try{
+        		View bar = findViewById(R.id.progressBar);
+                bar.setVisibility(0);
+        	}catch(Exception e){
+        		
+        	}
+        	
+        }
+  }
+    
+
+}
