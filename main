@@ -59,7 +59,7 @@ public class ClashOfTheTronActivity extends Activity implements OnClickListener 
         
         View bar = findViewById(R.id.progressBar);
         bar.setVisibility(8);
-        
+         
         feedback = (TextView) findViewById(R.id.textView1);
         
         myEditText = (EditText)findViewById(R.id.editText1);
